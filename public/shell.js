@@ -47,6 +47,7 @@ function side(){
    <button class="nav asstu" id="asStu" title="Xem như học sinh Đặng Tuấn, 8A1"><span class="av">T</span><span class="lbl">Xem như học sinh</span></button>
    ${n(r.v==="map",ic("map")+"Bản đồ flow",'data-go="map"')}
    ${n(r.v==="sim",ic("chart")+"Mô phỏng chỉ số",'data-go="sim"')}
+   ${n(r.v==="pair",ic("chart")+"Mô phỏng theo cặp câu",'data-go="pair"')}
    ${n(r.v==="set",ic("set")+"Cài đặt prototype",'data-go="set"')}
    <div class="ai-state">${aiOK?"TOMO đang bật":aiOK===false?"TOMO chưa bật: dùng dữ liệu mẫu":"Đang kết nối TOMO…"}</div>`;
   const as=document.querySelector("#asStu");if(as)as.onclick=()=>setRole("hs");
