@@ -63,7 +63,7 @@ function renderStu(){
   const q=id=>root.querySelector(id);
   if(q("#simCopy"))q("#simCopy").onclick=()=>{if(!need())return;logEv("copy",{n:58});logEv("leave");logEv("back",{sec:25});flagCopy(25)};
   if(q("#simShot"))q("#simShot").onclick=()=>{if(!need())return;logEv("shot")};
-  if(q("#simShotLeave"))q("#simShotLeave").onclick=()=>{if(!need())return;logEv("shot");logEv("leave");logEv("back",{sec:30});flagCopy(30,"shot")};
+  if(q("#simShotLeave"))q("#simShotLeave").onclick=()=>{if(!need())return;shot("PrtSc (mô phỏng)",true);logEv("leave");logEv("back",{sec:30});flagCopy(30,"shot")};
   const simq=(id,f)=>{const b=q(id);if(b)b.onclick=()=>{if(!need())return;f()}};
   simq("#simLeave",()=>{logEv("leave");logEv("back",{sec:40});toast("Đã mô phỏng: Tuấn rời cửa sổ 40 giây rồi quay lại.")});
   simq("#simPaste",()=>logEv("paste"));simq("#simRclick",()=>logEv("rclick"));simq("#simNarrow",()=>logEv("narrow"));
@@ -98,7 +98,7 @@ function scrQ(){
   const passage=it.skill.startsWith("DH");
   return `<div class="stop"><button class="sback" data-exit aria-label="Lưu và thoát">${ic("x",20)}</button><span>Câu ${w.i+1}/${n}</span><button class="markbtn ${w.mark[w.i]?"on":""}" data-mark aria-pressed="${!!w.mark[w.i]}">${ic("star",16)} Xem lại</button></div>
   <div class="pbar thin"><i style="width:${(w.i+1)/n*100}%"></i></div>
-  <div class="sbody q">${lockLeft()>0?`<div class="slow" role="alert"><b>Em đang làm rất nhanh mấy câu liền</b><span>Với tốc độ em hay làm, câu này cần khoảng ${timeOf(it,w.i).exp} giây. Em đọc lại đề và các đáp án nhé.</span><span class="cd">Câu tiếp mở sau <b id="cdn">${lockLeft()}</b> giây</span></div>`:""}
+  <div class="sbody q">${SU.shotAt&&Date.now()-SU.shotAt<5000?`<div class="shotov" role="alertdialog" aria-live="assertive"><div class="shotcard"><div class="shotic">${ic("cam",30)}</div><b>Em vừa chụp màn hình</b><span>Bài này để cô biết em hiểu bài đến đâu, nên em tự làm nhé. Lần chụp này đã được ghi lại và cô sẽ thấy.</span><button class="shotok" data-shotok>Em hiểu rồi</button><i class="shotbar"></i></div></div>`:""}${lockLeft()>0?`<div class="slow" role="alert"><b>Em đang làm rất nhanh mấy câu liền</b><span>Với tốc độ em hay làm, câu này cần khoảng ${timeOf(it,w.i).exp} giây. Em đọc lại đề và các đáp án nhé.</span><span class="cd">Câu tiếp mở sau <b id="cdn">${lockLeft()}</b> giây</span></div>`:""}
   <span class="dtag ${lv[1]}">${lv[0]}</span>
   ${passage?`<details class="passage" ${w.i===8?"open":""}><summary>Đoạn văn</summary><p>${esc(PASSAGE)}</p></details>`:""}
   <p class="stem">${esc(it.stem.replace(/^\((Đoạn 60 từ về nước trên sao Hỏa|Cùng đoạn)\)\s*/,""))}</p>
@@ -141,6 +141,7 @@ function lockLeft(){return Math.max(0,Math.ceil((SU.lockUntil-Date.now())/1000))
 function startLock(){SU.lockUntil=Date.now()+PAUSE*1000;clearInterval(SU.lt);SU.lt=setInterval(()=>{const n=lockLeft();const el=document.querySelector("#cdn");if(el)el.textContent=n;if(n<=0){clearInterval(SU.lt);rerender()}},250)}
 function openQ(i){const w=stuW();w.i=i;SU.r="q";SU.shownAt=Date.now();SU.nudge=false;save();logEv("show");rerender()}
 function bindScr(){
+  {const so=document.querySelector("[data-shotok]");if(so)so.onclick=()=>{SU.shotAt=0;clearTimeout(SU.shotT);const o=document.querySelector(".shotov");if(o)o.remove()}}
   stuOn("[data-sgo]",el=>{const g=el.dataset.sgo;if(g==="q"){openQ(stuW().i);return}if(g==="practice"){SU.pi=0;SU.pAns=null;stuW().pracOK=0}SU.r=g;rerender()});
   const sb=document.querySelector("#startQ");if(sb)sb.onclick=()=>{const w=stuW();w.state="doing";w.start=w.start||Date.now();openQ(0)};
   stuOn("[data-opt]",el=>{const w=stuW(),j=+el.dataset.opt,it=find(stuA().examId).items[w.i];const prev=w.ans[w.i];if(prev===j)return;
@@ -174,7 +175,7 @@ function showIdle(){SU.idle=true;logEv("idle");rerender()}
 function flagCopy(sec,kind){const w=stuW();w.copyQ=w.copyQ||{};if(sec>20)w.copyQ[w.i]=kind||"copy";save();renderLog()}
 
 /* ---------- Bảng "Hệ thống ghi nhận" ---------- */
-const EVN={show:"Hiện câu",pick:"Chọn",change:"Đổi đáp án",hint:"Mở gợi ý",copy:"Sao chép nội dung câu",paste:"Dán nội dung",rclick:"Mở menu chuột phải",narrow:"Cửa sổ bị thu hẹp (có thể đang chia đôi màn hình)",wide:"Cửa sổ rộng lại",shot:"Chụp màn hình (không chặn, không lưu ảnh)",leave:"Rời app",back:"Quay lại",idle:"Không thao tác 3 phút, dừng đồng hồ",resume:"Tiếp tục",nudge:"3 câu nhanh liền, phần lớn sai: nhắc và khoá Câu tiếp 5 giây",fastone:"Nhanh hơn ngưỡng, chưa nhắc",tau:"Cập nhật tốc độ τ của Tuấn",fastok:"Nhanh nhưng câu này dễ với em, không nhắc, không gắn cờ",exit:"Lưu và thoát",passage:"Mở lại đoạn văn",submit:"Nộp bài",practice:"Luyện lỗi",practice_done:"Xong luyện lỗi"};
+const EVN={shotblack:"Ảnh chụp ra màu đen (app bảo vệ màn làm bài)",shotwarn:"Hiện lời nhắc cho em: không chụp màn hình",show:"Hiện câu",pick:"Chọn",change:"Đổi đáp án",hint:"Mở gợi ý",copy:"Sao chép nội dung câu",paste:"Dán nội dung",rclick:"Mở menu chuột phải",narrow:"Cửa sổ bị thu hẹp (có thể đang chia đôi màn hình)",wide:"Cửa sổ rộng lại",shot:"Chụp màn hình (không chặn, không lưu ảnh)",leave:"Rời app",back:"Quay lại",idle:"Không thao tác 3 phút, dừng đồng hồ",resume:"Tiếp tục",nudge:"3 câu nhanh liền, phần lớn sai: nhắc và khoá Câu tiếp 5 giây",fastone:"Nhanh hơn ngưỡng, chưa nhắc",tau:"Cập nhật tốc độ τ của Tuấn",fastok:"Nhanh nhưng câu này dễ với em, không nhắc, không gắn cờ",exit:"Lưu và thoát",passage:"Mở lại đoạn văn",submit:"Nộp bài",practice:"Luyện lỗi",practice_done:"Xong luyện lỗi"};
 function wOf(w,i,it){if(w.copyQ&&w.copyQ[i])return [0.5,w.copyQ[i]==="shot"?"Nghi dùng công cụ ngoài (chụp màn hình)":"Nghi dùng công cụ ngoài"];if(w.guessQ&&w.guessQ[i]&&w.ans[i]!==it.answer)return [0,"Đoán mò"];if(w.fastQ&&w.fastQ[i]==="bad"&&w.ans[i]!==it.answer)return [0.5,""];if(w.ans[i]===it.answer&&((w.chg[i]||0)>=3||w.hint[i]))return [0.5,"Chưa chắc chắn"];return [1,""]}
 function renderLog(){const el=document.querySelector("#slog");if(!el)return;const w=stuW(),e=find(stuA().examId);
   const rows=e.items.map((it,i)=>{const [wt,f]=wOf(w,i,it);return w.ans[i]==null&&!w.copyQ?.[i]?"":`<tr><td>${i+1}</td><td>${w.ans[i]==null?"—":ABCD[w.ans[i]]}</td><td class="num">${w.t[i]??"—"}s</td><td class="num">${w.chg[i]||0}</td><td>${w.hint[i]?"có":""}</td><td class="num ${wt<1?"warn-t":""}">${wt}</td><td>${f?`<span class="apill ${wt===0?"s-neg":"s-warn"}">${f}</span>`:""}</td></tr>`}).join("");
@@ -195,7 +196,12 @@ document.addEventListener("contextmenu",e=>{if(inQ()&&e.target.closest("#scr"))l
    Mac:     Cmd+Shift+3 / 4 / 5 (thêm Ctrl để chép vào bộ nhớ tạm) → thường chỉ thấy Cmd+Shift, phím số bị macOS chặn → có thể;
             nếu trình duyệt nhận được cả phím số thì chắc chắn. */
 const isMac=/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent);
-function shot(combo,sure){logEv("shot",{combo,sure});SU.sus={kind:"shot",at:Date.now()}}
+/* Điện thoại (app): màn làm bài bật chế độ bảo vệ, ảnh chụp màn hình ra màu đen. Mô phỏng: chớp màn hình, ảnh thu nhỏ đen bay xuống góc như iOS/Android. */
+function blackShot(){const ph=document.querySelector(".phonef");if(!ph)return;const old=ph.querySelector(".ssfx");if(old)old.remove();
+  ph.insertAdjacentHTML("beforeend",`<div class="ssfx"><div class="ssflash"></div><div class="ssthumb" title="Ảnh vừa chụp"><div class="ssimg"><span>Nội dung bài làm được bảo vệ</span></div></div></div>`);
+  setTimeout(()=>{const f=ph.querySelector(".ssfx");if(f)f.classList.add("out");setTimeout(()=>{const g=ph.querySelector(".ssfx");if(g)g.remove()},400)},4200);
+  logEv("shotblack")}
+function shot(combo,sure){logEv("shot",{combo,sure});if(stuDev()==="phone")blackShot();SU.sus={kind:"shot",at:Date.now()};SU.shotAt=Date.now();logEv("shotwarn");if(SU.r==="q"){rerender();clearTimeout(SU.shotT);SU.shotT=setTimeout(()=>{SU.shotAt=0;const o=document.querySelector(".shotov");if(o){o.classList.add("out");setTimeout(()=>o.remove(),250)}},5000)}}
 document.addEventListener("keyup",e=>{if(!inQ())return;if(e.key==="PrintScreen")shot(e.altKey?"Alt+PrtSc":e.metaKey?"Win+PrtSc":"PrtSc",true)});
 document.addEventListener("keydown",e=>{if(!inQ())return;
   if(e.metaKey&&e.shiftKey&&["3","4","5","#","$","%"].includes(e.key)){shot(`${e.ctrlKey?"Cmd+Ctrl+Shift":"Cmd+Shift"}+${{"#":"3","$":"4","%":"5"}[e.key]||e.key}`,true);SU.arm=null;return}

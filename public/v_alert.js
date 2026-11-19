@@ -32,19 +32,26 @@ function alertsOf(c){
 const AK={swing:["Điểm dao động","s-neg","Điểm lên xuống thất thường, không theo mức của em và độ khó của đề"],
   stuck:["Hụt ở bước tiếp","s-warn","Nền đã làm được nhưng kỹ năng nối tiếp chưa làm được"],
   skip:["Làm được bước sau, nền chưa vững","s-info","Kỹ năng sau làm được trong khi kỹ năng nền chưa: có thể đoán, chép, hoặc nền đo chưa đúng"]};
+const akey=x=>`${x.s.id}|${x.k}|${x.a||""}`;
+const alSt=x=>((DB.alertSt||{})[akey(x)]||null);
+function setAlSt(x,st,lab){DB.alertSt=DB.alertSt||{};const k=akey(x),before=DB.alertSt[k]||null;DB.alertSt[k]=st?{st,lab,at:new Date().toISOString().slice(0,10)}:null;if(!st)delete DB.alertSt[k];save();return ()=>{if(before)DB.alertSt[k]=before;else delete DB.alertSt[k];save();render()}}
+/* Gợi ý bước tiếp theo cho từng loại cảnh báo: [việc nên làm, nút chính, nút phụ] */
+function nextOf(x){
+  if(x.k==="swing")return {txt:"Hỏi em 3 câu ngay trên lớp để biết mức thật, rồi mới tin điểm BTVN.",btn:`<button class="btn sm pri" data-alv="${x.s.id}">Hỏi em ngay</button>`,sec:[["Xem bài làm",()=>studentWorkOf(x)]]};
+  if(x.k==="stuck")return {txt:`Giao 5–8 câu nối từ ${sk(x.a)} sang ${sk(x.b)}.`,btn:`<button class="btn sm pri" data-alg="${x.b}" data-als="${x.s.name}" data-alk="${akey(x)}">Giao bài nối</button>`,sec:[]};
+  return {txt:`Cho em làm vài câu ${sk(x.a)}. Làm tốt thì cảnh báo tự hết; nếu không, cô xem lại kết quả ${sk(x.b)}.`,btn:`<button class="btn sm pri" data-alg="${x.a}" data-als="${x.s.name}" data-alk="${akey(x)}">Kiểm tra lại nền</button>`,sec:[["Hỏi em ngay",()=>toVerify(x)]]};
+}
 function alertPanel(c){
-  const al=alertsOf(c.id);const kf=UI.r.ak||"all";const cnt=k=>al.filter(x=>x.k===k).length;
-  const rows=al.filter(x=>kf==="all"||x.k===kf);
+  const all=alertsOf(c.id);const closed=all.filter(x=>{const t=alSt(x);return t&&(t.st==="xong"||t.st==="bo")});const al=all.filter(x=>!closed.includes(x));
+  const kf=UI.r.ak||"all";const cnt=k=>al.filter(x=>x.k===k).length;
+  const rows=kf==="done"?closed:al.filter(x=>kf==="all"||x.k===kf);
   const chip=(k,lab)=>`<button class="fchip ${kf===k?"on":""}" data-ak="${k}">${lab} <b>${k==="all"?al.length:cnt(k)}</b></button>`;
   const detail=x=>x.k==="swing"?`<div class="sparkrow">${spark(x.sr)}<span class="muted">lệch kỳ vọng đổi TB <b class="neg-t">${String(x.sw).replace(".",",")}</b> điểm/bài</span></div>`
     :`<span>${esc(sk(x.a))} <b>${LVN[x.la]}</b> ${ic("chev",11)} ${esc(sk(x.b))} <b>${LVN[x.lb]}</b></span>`;
-  const act=x=>x.k==="swing"?`<button class="btn sm" data-alw="${x.s.name}">Xem bài làm</button>`
-    :x.k==="stuck"?`<button class="btn sm" data-alg="${x.b}" data-als="${x.s.name}">Giao bài nối</button>`
-    :`<button class="btn sm" data-alg="${x.a}" data-als="${x.s.name}">Kiểm tra lại nền</button>`;
   return `<section class="panel flush alertp"><div class="phead pad"><h2>Cảnh báo bất thường</h2><span class="muted">6 bài gần nhất · ${al.length} cảnh báo · ${new Set(al.map(x=>x.s.id)).size} em</span>
     <button class="iconbtn sm" id="alInfo" aria-label="Cách tính">${ic("info",14)}</button></div>
-    <div class="fchips pad">${chip("all","Tất cả")}${chip("swing","Điểm dao động")}${chip("stuck","Hụt ở bước tiếp")}${chip("skip","Nền chưa vững")}</div>
-    ${rows.length?`<table class="tbl compact"><thead><tr><th>STT</th><th>Học sinh</th><th>Cảnh báo</th><th>Chi tiết</th><th></th></tr></thead><tbody>${rows.map((x,i)=>`<tr><td class="mono">${i+1}</td><td>${esc(x.s.full||x.s.name)}</td><td><span class="apill ${AK[x.k][1]}" title="${esc(AK[x.k][2])}">${AK[x.k][0]}${x.sev===2?" · mạnh":""}</span></td><td>${detail(x)}</td><td class="act"><button class="btn sm ghost" data-alx="${x.s.id}|${x.k}|${x.a||""}" aria-expanded="${UI.r.alx===`${x.s.id}|${x.k}|${x.a||""}`}">${UI.r.alx===`${x.s.id}|${x.k}|${x.a||""}`?"Ẩn giải thích":"Vì sao?"}</button>${act(x)}</td></tr>${UI.r.alx===`${x.s.id}|${x.k}|${x.a||""}`?`<tr class="alx"><td></td><td colspan="4">${explainAlert(c.id,x)}</td></tr>`:""}`).join("")}</tbody></table>`
+    <div class="fchips pad">${chip("all","Tất cả")}${chip("swing","Điểm dao động")}${chip("stuck","Hụt ở bước tiếp")}${chip("skip","Nền chưa vững")}${closed.length?`<button class="fchip ${kf==="done"?"on":""}" data-ak="done">Đã xử lý <b>${closed.length}</b></button>`:""}</div>
+    ${rows.length?`<table class="tbl compact"><thead><tr><th>STT</th><th>Học sinh</th><th>Cảnh báo</th><th>Chi tiết</th><th>Bước tiếp theo</th><th></th></tr></thead><tbody>${rows.map((x,i)=>`<tr><td class="mono">${i+1}</td><td>${esc(x.s.full||x.s.name)}</td><td><span class="apill ${AK[x.k][1]}" title="${esc(AK[x.k][2])}">${AK[x.k][0]}${x.sev===2?" · mạnh":""}</span></td><td>${detail(x)}</td><td class="nxt">${(()=>{const t=alSt(x),n=nextOf(x);return t?`<span class="alst st-${t.st}">${esc(t.lab)}</span>`:`<span class="small">${esc(n.txt)}</span>`})()}</td><td class="act"><button class="btn sm ghost" data-alx="${akey(x)}" aria-expanded="${UI.r.alx===akey(x)}">${UI.r.alx===akey(x)?"Ẩn":"Vì sao?"}</button>${(()=>{const t=alSt(x);return t&&(t.st==="xong"||t.st==="bo")?`<button class="btn sm" data-alre="${akey(x)}">Mở lại</button>`:nextOf(x).btn})()}<button class="iconbtn sm" data-alm="${akey(x)}" aria-label="Thao tác khác">${ic("kebab",14)}</button></td></tr>${UI.r.alx===`${x.s.id}|${x.k}|${x.a||""}`?`<tr class="alx"><td></td><td colspan="5">${explainAlert(c.id,x)}</td></tr>`:""}`).join("")}</tbody></table>`
     :`<div class="empty-line">Không có cảnh báo loại này.</div>`}</section>`;
 }
 const vn1=v=>(v>0?"+":v<0?"−":"")+Math.abs(v).toFixed(1).replace(".",",");
@@ -71,6 +78,19 @@ function bindAlert(c){
     <dt>Hụt ở bước tiếp</dt><dd>Kỹ năng nền đã "Làm được" trở lên nhưng kỹ năng nối tiếp thấp hơn từ 2 mức. Ví dụ: tường thuật câu trần thuật làm được, tường thuật câu hỏi chưa làm được.</dd>
     <dt>Làm được bước sau, nền chưa vững</dt><dd>Kỹ năng nối tiếp đạt "Làm được" trong khi kỹ năng nền chỉ "Đang luyện" hoặc thấp hơn, kể cả kỹ năng thuộc unit chưa dạy. Cần kiểm tra lại nền trước khi tin vào kết quả.</dd>
     <dt>Cặp kỹ năng đang xét</dt><dd>${PREREQ.map(([a,b])=>`${esc(sk(a))} → ${esc(sk(b))}`).join("<br>")}</dd></dl></div>`);
-  on("[data-alg]",el=>aiModal({unit:12,kind:"lt",min:10,skills:[el.dataset.alg],reason:`Bài riêng cho ${fullOf(c,el.dataset.als)} (${c}): ${sk(el.dataset.alg)}.`}));
-  on("[data-alw]",el=>{const a=assignsOf(c).find(x=>x.state==="done");if(a)studentWork(a.id,el.dataset.alw);else toast("Chưa có bài đã chấm.")});
+  const AL=alertsOf(c);const byK=k=>AL.find(x=>akey(x)===k);
+  on("[data-alv]",el=>{const x=AL.find(z=>z.s.id===el.dataset.alv&&z.k==="swing");if(x)toVerify(x)});
+  on("[data-alre]",el=>{const x=byK(el.dataset.alre);if(x){setAlSt(x,null);render();toast("Đã mở lại cảnh báo.")}});
+  on("[data-alm]",el=>{const x=byK(el.dataset.alm);if(!x)return;const t=alSt(x);popMenu(el,[...nextOf(x).sec,
+    ...(t&&(t.st==="xong"||t.st==="bo")?[]:[["Đánh dấu đã xử lý",()=>{const u=setAlSt(x,"xong","Đã xử lý");render();toast("Đã chuyển vào mục Đã xử lý.",u)}],
+    ["Bỏ qua cảnh báo này",()=>{const u=setAlSt(x,"bo","Cô bỏ qua");render();toast("Đã bỏ qua. Cảnh báo sẽ hiện lại nếu bài sau vẫn lệch.",u)}]])])});
+  on("[data-alg]",el=>{const x=el.dataset.alk&&byK(el.dataset.alk);if(x)setAlSt(x,"dang",x.k==="stuck"?"Đã mở giao bài nối · chờ em làm":"Đã mở kiểm tra lại nền · chờ em làm");aiModal({unit:12,kind:"lt",min:10,skills:[el.dataset.alg],reason:`Bài riêng cho ${fullOf(c,el.dataset.als)} (${c}): ${sk(el.dataset.alg)}.`})});
+  function studentWorkOf(x){const a=assignsOf(c).find(z=>z.state==="done");if(a)studentWork(a.id,x.s.name);else toast("Chưa có bài đã chấm.")}
+  window.studentWorkOf=studentWorkOf;
+  /* Đưa em vào "Cần xác nhận": ở đó cô hỏi em ngay trên máy (3 câu) hoặc cho làm lại bài ngắn */
+  function toVerify(x){const a=assignsOf(c).find(z=>z.state==="done");if(!a){toast("Chưa có bài đã chấm.");return}
+    const had=DB.verify.find(v=>v.cls===c&&v.name===x.s.name&&!v.status);if(!had){markVerify(a,[x.s.id]);const v=DB.verify.find(v=>v.cls===c&&v.name===x.s.name&&!v.status);if(v){v.why=`Cảnh báo: ${AK[x.k][0].toLowerCase()}`;v.clsScore=null}}
+    setAlSt(x,"dang","Đã đưa vào Cần xác nhận");
+    const v=DB.verify.find(v=>v.cls===c&&v.name===x.s.name&&!v.status);if(v&&typeof oralModal==="function"){render();oralModal(c,x.s.name,v)}else{render();toast("Đã đưa em vào Cần xác nhận.")}}
+  window.toVerify=toVerify;
 }

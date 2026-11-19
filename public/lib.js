@@ -72,12 +72,12 @@ Chỉ trả về mảng JSON gồm ${mc.length} số theo đúng thứ tự.`;
     mc.forEach((it,i)=>{if(it.check==="chua"){if(res[i]>=0&&res[i]<=3){it.answer=res[i];it.check="tomo";it.by="tomo";it.verified=false}else{it.check="lech";it.checkPick=-1;it.checkWhy="TOMO giải nhưng không thấy đáp án duy nhất."}return}if(res[i]===it.answer){if(it.check!=="tomo")it.check="khop";it.verified=true;return}it.check="lech";it.checkPick=res[i];if(it.check==="lech")it.checkWhy=`Lượt giải độc lập chọn ${res[i]>=0?ABCD[res[i]]:"không có đáp án duy nhất"}.`});
   },
   async alternatives(it,dir,unit){
-    const p=`Soạn 3 câu trắc nghiệm Tiếng Anh 8 cùng kỹ năng ${it.skill} (${sk(it.skill)}), Unit ${unit}, nhưng ${dir>0?"KHÓ HƠN":"DỄ HƠN"} câu sau đúng một mức:
+    const p=`Soạn 3 câu trắc nghiệm Tiếng Anh 8 cùng kỹ năng ${it.skill} (${sk(it.skill)}), Unit ${unit}, ${dir===0?"CÙNG MỨC ĐỘ KHÓ với câu sau (giữ nguyên điểm rubric, đổi nội dung và ngữ cảnh, không trùng đáp án)":`nhưng ${dir>0?"KHÓ HƠN":"DỄ HƠN"} câu sau đúng một mức`}:
 ${it.stem} | ${it.options.join(" / ")} (điểm rubric hiện tại A${it.rub.A} B${it.rub.B} C${it.rub.C} D${it.rub.D} E${it.rub.E})
 ${RUBRIC}
 ${SCHEMA}
 Chỉ trả về mảng JSON gồm 3 câu.`;
-    const n=cleanItems(await ask(p,"default"),[it.skill]); await AI.blind(n); return n;
+    const n=cleanItems(await ask(p,"default"),[it.skill]); if(dir===0)n.forEach(x=>{x.rub=clone(it.rub);x.b=it.b}); await AI.blind(n); return n;
   },
   async twins(items,onText){
     const mc=items.filter(i=>i.type!=="rewrite");

@@ -86,7 +86,7 @@ function studentWork(aid,n){
   if(!row||!row.submitted){modal(mhead(`${n} chưa nộp bài`,`Hạn nộp: ${fmtDue(a.due)}.`)+`<div class="mfoot"><button class="btn" data-close>Đóng</button></div>`);return}
   const R=respOf(a),rr=R.rows.find(x=>x.s.name===n);const rows=e.items.map((q,i)=>{const x=rr.ans[i];return [i+1,x.ok?"Đúng":"Sai",q.options&&x.pick!=null?ABCD[x.pick]+". "+q.options[x.pick]:"—",x.ok?"—":(x.tag||sk(q.skill)),mvOf(q)[1]]});
   modal(mhead(`${n} · ${e.title}`,`${row.score}/10 · ${row.time||"—"} phút`)+`<table class="tbl compact"><thead><tr><th class="num">Câu</th><th>Kết quả</th><th>Em chọn</th><th>Lỗi sai</th><th>Mức vận dụng</th></tr></thead><tbody>${rows.map(r=>`<tr><td class="num">${r[0]}</td><td class="${r[1]==="Sai"?"neg-t":""}">${r[1]}</td><td>${esc(r[2])}</td><td class="small">${esc(r[3])}</td><td class="small">${esc(r[4])}</td></tr>`).join("")}</tbody></table>
-  <p class="muted small">Ghi nhận khi làm bài: ${n==="Minh"?"rời bài 1 lần (25 giây) ở câu 7.":n==="An"?"2 lần sao chép rồi rời bài.":"không có."}</p><div class="mfoot"><button class="btn" data-close>Đóng</button></div>`,null,"wide");
+  <p class="muted small">Ghi nhận khi làm bài: ${n==="Minh"?"rời bài 1 lần (25 giây) ở câu 7.":n==="An"?"2 lần sao chép rồi rời bài.":"không có."}</p><div class="mfoot"><button class="btn" id="swProf">Xem hồ sơ em</button><span class="sp"></span><button class="btn" data-close>Đóng</button></div>`,()=>{document.querySelector("#swProf").onclick=()=>studentSheet(a.cls,n)},"wide");
 }
 function fixModal(aid){const a=DB.assigns.find(x=>x.id===aid),e=find(a.examId),rs=resultOf(a);
   const worst=e.items.map((it,i)=>({it,i,r:respOf(a).rate[i]})).sort((x,y)=>x.r-y.r).slice(0,3);
@@ -96,27 +96,62 @@ function fixModal(aid){const a=DB.assigns.find(x=>x.id===aid),e=find(a.examId),r
 }
 /* ---- Cần xác nhận ---- */
 function verifyView(c){
-  const pend=DB.verify.filter(v=>v.cls===c.id&&!v.status),done=DB.verify.filter(v=>v.cls===c.id&&v.status);
-  const msg={tu:n=>`Đã ghi nhận. Kết quả bài về nhà của ${n} được giữ.`,khong:n=>`Đã ghi nhận. Hệ thống dùng kết quả trên lớp để chọn bài vừa sức cho ${n}.`,lai:n=>`Hệ thống sẽ thêm 2–3 câu mini test vào bài buổi sau của ${n}.`};
+  const pend=DB.verify.filter(v=>v.cls===c.id&&!v.status),chk=DB.verify.filter(v=>v.cls===c.id&&v.status==="lai"),done=DB.verify.filter(v=>v.cls===c.id&&(v.status==="tu"||v.status==="khong"));
+  const msg={tu:v=>`Tự làm: giữ kết quả bài về nhà.${v.oral?` Hỏi tại lớp ${v.oral.ok}/${v.oral.n} câu đúng.`:""}`,khong:v=>`Không tự làm: dùng kết quả trên lớp để chọn bài vừa sức.${v.oral?` Hỏi tại lớp ${v.oral.ok}/${v.oral.n} câu đúng.`:""}`};
+  const how={next:"Chờ bài kế tiếp của lớp: hệ thống thêm 2–3 câu cùng kỹ năng cho em",mini:"Đã giao mini test riêng, chờ em làm"};
   return `<p class="lede">Kết quả trên lớp của các em này thấp hơn nhiều so với bài về nhà. Đây chưa phải bằng chứng; cô hỏi lại em trước khi chọn. Phụ huynh chỉ được báo khi cô đã xác nhận và việc này lặp lại.</p>
   ${pend.length>=2?`<div class="notice info">Còn ${pend.length} em chờ cô xác nhận. Nếu cô chưa xem trong 3 ngày, hệ thống sẽ kiểm tra lại các em ở buổi sau.</div>`:""}
-  ${pend.length?`<section class="panel flush"><table class="tbl"><thead><tr><th>Học sinh</th><th class="num" title="BTVN = bài tập về nhà">Điểm BTVN</th><th class="num">Trên lớp</th><th>Ghi nhận khi làm bài</th><th></th></tr></thead><tbody>${pend.map(v=>`<tr><td class="idc"><a href="#" data-student="${v.name}"><b>${esc(fullOf(c.id,v.name))}</b></a><div class="sub">${esc(v.task)} · gợi ý: hỏi em ${esc(v.ask)}</div></td><td class="num">${v.home}<span class="unit">/10</span></td><td class="num"><span class="neg-t">${v.clsScore}</span><span class="unit">/10</span><div class="sub">dự kiến ${String(v.exp).replace(".",",")}</div></td><td class="small">${esc(v.why)}</td><td class="act"><button class="btn sm" data-vf="${v.name}:tu">Tự làm</button><button class="btn sm" data-vf="${v.name}:khong">Không tự làm</button><button class="btn sm pri" data-vf="${v.name}:lai">Kiểm tra lại</button></td></tr>`).join("")}</tbody></table></section>`:`<section class="panel"><div class="empty-line">Không có em nào cần cô xác nhận.</div></section>`}
-  ${done.length?`<section class="panel"><div class="phead"><h2>Đã xử lý</h2></div><ul class="list">${done.map(v=>`<li><div><b>${v.name}</b> <span class="muted">${esc(msg[v.status](v.name))}</span></div><button class="btn sm ghost" data-vundo="${v.name}">Hoàn tác</button></li>`).join("")}</ul></section>`:""}`;
+  ${pend.length?`<section class="panel flush"><div class="phead pad"><h2>Chờ cô xác nhận</h2><span class="muted">${pend.length} em</span></div><table class="tbl"><thead><tr><th>Học sinh</th><th class="num" title="BTVN = bài tập về nhà">Điểm BTVN</th><th class="num">Trên lớp</th><th>Ghi nhận khi làm bài</th><th></th></tr></thead><tbody>${pend.map(v=>`<tr><td class="idc"><a href="#" data-student="${v.name}"><b>${esc(fullOf(c.id,v.name))}</b></a><div class="sub">${esc(v.task)} · gợi ý: hỏi em ${esc(v.ask)}</div></td><td class="num">${v.home}<span class="unit">/10</span></td><td class="num">${v.clsScore!=null?`<span class="neg-t">${v.clsScore}</span><span class="unit">/10</span>`:`<span class="muted">chưa làm</span>`}<div class="sub">dự kiến ${String(v.exp).replace(".",",")}</div></td><td class="small">${esc(v.why)}</td><td class="act"><div class="acts"><button class="btn sm pri" data-oral="${v.name}">Hỏi em ngay</button><button class="btn sm" data-vf="${v.name}:lai">Kiểm tra sau</button><button class="iconbtn" data-vmore="${v.name}" aria-label="Ghi nhận luôn">${ic("kebab")}</button></div></td></tr>`).join("")}</tbody></table></section>`:`<section class="panel"><div class="empty-line">Không có em nào chờ cô xác nhận.</div></section>`}
+  ${chk.length?`<section class="panel flush"><div class="phead pad"><h2>Đang kiểm tra lại</h2><span class="muted">${chk.length} em · chưa kết luận, báo cáo phụ huynh vẫn tạm giữ</span></div><table class="tbl"><tbody>${chk.map(v=>`<tr><td class="idc"><b>${esc(fullOf(c.id,v.name))}</b><div class="sub">${esc(how[v.how||"next"])}</div></td><td class="act"><div class="acts"><button class="btn sm" data-oral="${v.name}">Hỏi em ngay</button><button class="btn sm" data-vf="${v.name}:tu">Tự làm</button><button class="btn sm" data-vf="${v.name}:khong">Không tự làm</button><button class="btn sm ghost" data-vundo="${v.name}">Huỷ kiểm tra</button></div></td></tr>`).join("")}</tbody></table></section>`:""}
+  ${done.length?`<section class="panel"><div class="phead"><h2>Đã xử lý</h2></div><ul class="list">${done.map(v=>`<li><div><b>${v.name}</b> <span class="muted">${esc(msg[v.status](v))}</span></div><button class="btn sm ghost" data-vundo="${v.name}">Hoàn tác</button></li>`).join("")}</ul></section>`:""}`;
 }
-function recheckModal(c,n,v){
+/* Hỏi em ngay tại lớp: TOMO chọn sẵn 3 câu từ chính những câu khó em làm đúng ở nhà, kèm câu đổi số liệu để em không nhớ đáp án */
+function oralSet(c,n,v){
+  const a=DB.assigns.find(x=>x.cls===c&&!x.twinOfAssign&&find(x.examId).title===v.task&&x.state!=="scan")||DB.assigns.find(x=>x.cls===c&&!x.twinOfAssign&&x.kind==="lt"&&x.state==="done");
+  if(!a)return {a:null,qs:[]};const R=respOf(a),row=R.rows.find(r=>r.s.name===n&&r.submitted);if(!row)return {a,qs:[]};
+  const th=row.s.theta;const cand=R.e.items.map((it,i)=>({it,i,ok:row.ans[i].ok,p:pCorrect(th,it)})).filter(x=>x.ok&&x.it.type!=="rewrite").sort((x,y)=>x.p-y.p).slice(0,3);
+  const used=new Set(R.e.items.map(it=>it.id));
+  const qs=cand.map(x=>{const tw=DB.bank.filter(b=>b.skill===x.it.skill&&!used.has(b.id)&&b.options).sort((p,q)=>Math.abs(p.b-x.it.b)-Math.abs(q.b-x.it.b))[0];if(tw)used.add(tw.id);return Object.assign(x,{tw})});
+  return {a,qs};
+}
+function oralModal(c,n,v){
+  const {a,qs}=oralSet(c,n,v);v.oralAns=v.oralAns||{};const A=v.oralAns;
+  const draw=()=>{const M=document.querySelector("#layer .modal");if(!M)return;const ok=qs.filter((q,k)=>A[k]==="ok").length,ans=qs.filter((q,k)=>A[k]).length;
+    const sug=ans<qs.length?null:ok>=2?"tu":ok===0?"khong":"lai";
+    M.innerHTML=mhead(`Hỏi ${esc(fullOf(c,n))} ngay tại lớp`,`${esc(v.task)} · BTVN ${v.home}/10${v.clsScore!=null?`, trên lớp ${v.clsScore}/10`:""}${v.why&&/^Cảnh báo/.test(v.why)?` · ${esc(v.why)}`:""}. Mất khoảng 3 phút.`)+
+    `<div class="kqbar"><div><b>Cho em làm ngay trên máy này</b><span class="sub">Màn chuyển sang chế độ học sinh: chữ to, từng câu một, không có đáp án. Em tự bấm, xong đưa máy lại cho cô. Khoảng 2 phút.</span></div><button class="btn pri" id="kqGo">${v.quiz?"Cho em làm lại":"Bắt đầu cho em làm"}</button></div>
+    <p class="small muted">Hoặc cô hỏi miệng từng câu dưới đây và tự đánh dấu. Đây là các câu em đã làm đúng ở nhà, ưu tiên câu khó nhất với em; câu hỏi đã đổi từ ngữ để em không nhớ đáp án. Đáp án chỉ cô thấy.${v.ask?` Gợi ý thêm: hỏi em ${esc(v.ask)}.`:""}</p>
+    ${qs.length?`<ol class="oralq">${qs.map((q,k)=>{const Q=q.tw||q.it;return `<li class="${A[k]==="ok"?"ok":A[k]==="bad"?"bad":""}"><div class="oq">${esc(Q.stem)}</div><div class="oopts">${Q.options.map((o,j)=>`<span class="${j===Q.answer?"ans":""}">${ABCD[j]}. ${esc(o)}</span>`).join("")}</div>
+      ${v.quiz&&v.quiz[k]?`<div class="kqres ${v.quiz[k].pick===Q.answer?"ok":"bad"}">Em chọn <b>${v.quiz[k].pick==null?"(bỏ trống)":ABCD[v.quiz[k].pick]}</b> · ${v.quiz[k].sec} giây${v.quiz[k].sec<6?" · <span class=\"warn-t\">rất nhanh</span>":""}</div>`:""}<div class="sub">Đáp án: <b>${ABCD[Q.answer]}</b>${Q.explain?` · ${esc(Q.explain)}`:""}</div><div class="sub">Câu gốc trong BTVN: câu ${q.i+1}, ${esc(sk(q.it.skill))}; em làm đúng ở nhà${q.p<0.5?`, dù đây là câu khó với em (khả năng làm đúng khoảng ${Math.round(q.p*100)}%)`:` (khả năng làm đúng theo năng lực khoảng ${Math.round(q.p*100)}%)`}${q.tw?"":" (chưa có câu tương tự trong ngân hàng: hỏi lại chính câu gốc và nhờ em giải thích)"}.</div>
+      <div class="row gap orb"><button class="btn sm ${A[k]==="ok"?"pri":""}" data-oa="${k}:ok">Em trả lời đúng, giải thích được</button><button class="btn sm ${A[k]==="bad"?"pri":""}" data-oa="${k}:bad">Em trả lời sai hoặc không giải thích được</button></div></li>`}).join("")}</ol>`:`<div class="notice">Không tìm thấy bài làm BTVN của em để chọn câu. Cô hỏi theo gợi ý: ${esc(v.ask||"")}</div>`}
+    <div class="orsum">${ans<qs.length?`<span class="muted small">Đã hỏi ${ans}/${qs.length} câu.</span>`:`<span><b>${ok}/${qs.length} câu đúng.</b> ${sug==="tu"?"Gợi ý: em nắm được bài, ghi nhận Tự làm.":sug==="khong"?"Gợi ý: em chưa làm được những câu đã làm đúng ở nhà, ghi nhận Không tự làm.":"Chưa rõ: nên kiểm tra thêm bằng mini test hoặc bài kế tiếp."}</span>`}</div>
+    <div class="mfoot"><button class="btn" data-close>Để sau</button><button class="btn ${sug==="lai"?"pri":""}" data-oc="lai">Chưa rõ, kiểm tra thêm</button><button class="btn ${sug==="khong"?"pri":""}" data-oc="khong">Ghi nhận: Không tự làm</button><button class="btn ${sug==="tu"?"pri":""}" data-oc="tu">Ghi nhận: Tự làm</button></div>`;
+    M.querySelectorAll("[data-close]").forEach(b=>b.onclick=()=>{save();closeM()});
+    const kq=M.querySelector("#kqGo");if(kq)kq.onclick=()=>{closeM();kioskQuiz(fullOf(c,n),qs.map(q=>q.tw||q.it),res=>{v.quiz=res;res.forEach((r,k)=>{A[k]=r.pick===(qs[k].tw||qs[k].it).answer?"ok":"bad"});save();modal("",null,"wide");draw()})};
+    M.querySelectorAll("[data-oa]").forEach(b=>b.onclick=()=>{const [k,r]=b.dataset.oa.split(":");A[k]=A[k]===r?undefined:r;draw()});
+    M.querySelectorAll("[data-oc]").forEach(b=>b.onclick=()=>{const s=b.dataset.oc;v.oral={n:qs.length,ok:qs.filter((q,k)=>A[k]==="ok").length,asked:qs.map(q=>(q.tw||q.it).id)};
+      if(s==="lai"){closeM();recheckModal(c,n,v,true);return}
+      v.status=s;if(s==="khong")DB.repeatKhong[n]=(DB.repeatKhong[n]||0)+1;save();closeM();render();
+      toast(s==="tu"?`Đã ghi nhận ${n} tự làm (${v.oral.ok}/${v.oral.n} câu đúng). Kết quả bài về nhà được giữ.`:`Đã ghi nhận ${n} không tự làm. Hệ thống dùng kết quả trên lớp để chọn bài vừa sức.`+(DB.repeatKhong[n]>=2?" Việc này đã lặp lại: tin mời trao đổi đã soạn sẵn ở tab Phụ huynh.":""))});
+  };
+  modal("",null,"wide");draw();
+}
+function recheckModal(c,n,v,fromOral){
   const a=DB.assigns.filter(x=>x.cls===c&&x.kind==="lt"&&!x.twinOfAssign&&find(x.examId).title===v.task)[0]||DB.assigns.filter(x=>x.cls===c&&!x.twinOfAssign)[0];
-  const done=(opt)=>{v.status="lai";DB.recheck[c]=DB.recheck[c]||[];if(opt==="next"&&!DB.recheck[c].includes(n))DB.recheck[c].push(n);save();closeM();render()};
-  modal(mhead(`Kiểm tra lại · ${esc(fullOf(c,n))}`,"Chọn cách cô muốn xác nhận lại. Em vẫn chưa bị kết luận gì.")+`<div class="schopts">
-   <label class="radio"><input type="radio" name="rk" value="next" checked><span><b>Thêm vài câu vào bài kế tiếp của lớp</b><span class="sub">Khi cô giao bài sau, TOMO gợi ý thêm 2 đến 3 câu cùng kỹ năng cho em, không tạo bài riêng. Em chuyển sang "Đã xử lý" và hệ thống nhắc cô lúc giao bài. Phù hợp khi không gấp.</span></span></label>
+  const done=(opt)=>{v.status="lai";v.how="next";DB.recheck[c]=DB.recheck[c]||[];if(opt==="next"&&!DB.recheck[c].includes(n))DB.recheck[c].push(n);save();closeM();render()};
+  modal(mhead(`Kiểm tra sau · ${esc(fullOf(c,n))}`,fromOral&&v.oral?`Hỏi tại lớp: ${v.oral.ok}/${v.oral.n} câu đúng, chưa đủ để kết luận. Chọn cách kiểm tra thêm.`:"Chọn cách kiểm tra lại. Em vẫn chưa bị kết luận gì.")+`<div class="schopts">
+   <label class="radio"><input type="radio" name="rk" value="next" checked><span><b>Thêm vài câu vào bài kế tiếp của lớp</b><span class="sub">Khi cô giao bài sau, TOMO gợi ý thêm 2 đến 3 câu cùng kỹ năng cho em, không tạo bài riêng. Em chuyển sang mục "Đang kiểm tra lại" (chưa kết luận) và hệ thống nhắc cô lúc giao bài. Phù hợp khi không gấp.</span></span></label>
    <label class="radio"><input type="radio" name="rk" value="now"><span><b>Giao mini test riêng cho em ngay</b><span class="sub">Mở màn Tạo mini test từ "${esc(v.task)}"; cô chọn thời gian và giao trong hôm nay. Kết quả mới có thể đối chiếu lại với BTVN và điểm trên lớp.</span></span></label></div>
    <div class="mfoot"><button class="btn" data-close>Huỷ</button><button class="btn pri" id="rkOk">Tiếp tục</button></div>`,()=>{
-    document.querySelector("#rkOk").onclick=()=>{const o=document.querySelector('input[name="rk"]:checked').value;if(o==="now"&&a){v.status="lai";save();closeM();render();twinModal(a.examId,c)}else done("next");if(o==="next")toast(`Hệ thống sẽ gợi ý thêm 2 đến 3 câu cho ${n} khi cô giao bài kế tiếp cho ${c}.`)}})}
+    document.querySelector("#rkOk").onclick=()=>{const o=document.querySelector('input[name="rk"]:checked').value;if(o==="now"&&a){v.status="lai";v.how="mini";save();closeM();render();twinModal(a.examId,c)}else done("next");if(o==="next")toast(`Hệ thống sẽ gợi ý thêm 2 đến 3 câu cho ${n} khi cô giao bài kế tiếp cho ${c}.`)}})}
 function bindVerify(){
+  on("[data-oral]",el=>{const c=UI.r.cls;const v=DB.verify.find(x=>x.name===el.dataset.oral&&x.cls===c);oralModal(c,v.name,v)});
+  on("[data-vmore]",el=>{const c=UI.r.cls,n=el.dataset.vmore;popMenu(el,[["Ghi nhận luôn: Tự làm",()=>{const v=DB.verify.find(x=>x.name===n&&x.cls===c);v.status="tu";save();render();toast(`Đã ghi nhận. Kết quả bài về nhà của ${n} được giữ.`)},"Khi cô đã biết rõ, không cần hỏi lại"],["Ghi nhận luôn: Không tự làm",()=>{const v=DB.verify.find(x=>x.name===n&&x.cls===c);v.status="khong";DB.repeatKhong[n]=(DB.repeatKhong[n]||0)+1;save();render();toast(`Đã ghi nhận. Hệ thống dùng kết quả trên lớp để chọn bài vừa sức cho ${n}.`)}]])});
   on("[data-vf]",el=>{const [n,s]=el.dataset.vf.split(":");const c=UI.r.cls;const v=DB.verify.find(x=>x.name===n&&x.cls===c);
     if(s==="lai"){recheckModal(c,n,v);return}
     v.status=s;if(s==="khong")DB.repeatKhong[n]=(DB.repeatKhong[n]||0)+1;save();render();
     toast({tu:`Đã ghi nhận. Kết quả bài về nhà của ${n} được giữ.`,khong:`Đã ghi nhận. Hệ thống dùng kết quả trên lớp để chọn bài vừa sức cho ${n}.`,lai:`Hệ thống sẽ thêm 2–3 câu mini test vào bài buổi sau của ${n}.`}[s]+(s==="khong"&&DB.repeatKhong[n]>=2?" Việc này đã lặp lại: tin mời trao đổi đã soạn sẵn ở tab Phụ huynh.":""))});
-  on("[data-vundo]",el=>{const c=UI.r.cls;const v=DB.verify.find(x=>x.name===el.dataset.vundo&&x.cls===c);if(v.status==="khong")DB.repeatKhong[v.name]--;if(v.status==="lai")DB.recheck[c]=(DB.recheck[c]||[]).filter(x=>x!==v.name);v.status=null;save();render()});
+  on("[data-vundo]",el=>{const c=UI.r.cls;const v=DB.verify.find(x=>x.name===el.dataset.vundo&&x.cls===c);if(v.status==="khong")DB.repeatKhong[v.name]--;if(v.status==="lai")DB.recheck[c]=(DB.recheck[c]||[]).filter(x=>x!==v.name);v.status=null;delete v.how;delete v.oral;delete v.oralAns;save();render()});
   const tp=document.querySelector("#toParents");if(tp)tp.onclick=()=>go({v:"class",cls:UI.r.cls,tab:"parents",aid:UI.r.aid});
   const gn=document.querySelector("#giveNext");if(gn)gn.onclick=()=>assignModal(null,[UI.r.cls]);
   const f=document.querySelector("#first");if(f)f.onclick=()=>assignModal(null,[UI.r.cls]);
@@ -224,6 +259,7 @@ function studentSheet(c,n){
   <div class="segh"><span class="segtag t-me">Chỉ cô thấy</span><span class="muted">Số liệu để cô theo dõi, không gửi cho phụ huynh</span></div>
   <div class="kpis"><div><span class="k">Điểm dự kiến</span><span class="v num">${String(exp).replace(".",",")}<span class="unit">/10</span></span><span class="sub">${tag}${tamtinh(c,s)?" · tạm tính":""}</span></div><div><span class="k">Kỹ năng Làm được trở lên</span><span class="v num">${okN}<span class="unit">/${sks.length}</span></span></div><div><span class="k">Bài đã nộp</span><span class="v num">${nSub}<span class="unit">/${doneA.length}</span></span></div><div><span class="k">Điểm TB các bài</span><span class="v num">${avg==null?"—":String(avg).replace(".",",")}</span></div></div>
   <section class="panel"><div class="phead"><h2>Điểm dự kiến và điểm thực tế</h2><div class="legend"><span><i style="background:var(--hue)"></i>Thực tế</span><span><i class="tick"></i>Dự kiến trước khi làm</span></div></div>${studentChart(c,s)}</section>
+  ${typeof evidenceSection==="function"?evidenceSection(c,s):""}
   <p><b>Lỗi hay gặp:</b> ${esc(errs)}. <b>Vùng câu:</b> ${n} ${zone}.${n==="Bình"?" <b>Tiến bộ:</b> +12 điểm phần trăm so với 2 tuần trước ở Câu tường thuật.":""}</p>
   <p><b>Kiểm tra trên lớp:</b> ${tw?`bài về nhà đã được kiểm tra ngày 17/11: ${tw.cmp==="Khớp"?"khớp":tw.cmp.toLowerCase()}.`:"bài về nhà chưa được kiểm tra trên lớp; kết quả đang tạm tính."}</p>
   <div class="cols2 tight"><div><span class="flabel">Mức kỹ năng</span><ul class="list">${sks.map((k,i)=>`<li><span>${esc(sk(k))}</span><span class="lvchip lv${m[i]}">${LVN[m[i]]}</span></li>`).join("")}</ul></div>
@@ -237,8 +273,8 @@ function studentSheet(c,n){
         <div class="paract"><button class="btn" id="editRep">Sửa nội dung tin</button><button class="btn pri" id="sendOne" ${canSend?"":"disabled"}>Gửi cho phụ huynh</button></div></div></div>`
     :`<div class="empty-line">${esc(repState)}</div>`}
   </section>
-  <div class="mfoot"><button class="btn" data-close>Đóng</button><button class="btn" id="giveOne">Giao bài cho lớp</button></div>`,()=>{
-    document.querySelector("#giveOne").onclick=()=>assignModal(null,[c]);
+  <div class="mfoot"><button class="btn" data-close>Đóng</button></div>`,()=>{
+    if(typeof bindEvidence==="function")bindEvidence(c,s);
     const er=document.querySelector("#editRep");if(er)er.onclick=()=>{go({v:"class",cls:c,tab:"parents",aid:ld.id});setTimeout(()=>{const b=document.querySelector(`[data-prev="${n}"]`);if(b)b.click()},30)};
     const so=document.querySelector("#sendOne");if(so)so.onclick=()=>{closeM();sendReports(c,[n],()=>render())};
   },"wide");
@@ -250,7 +286,7 @@ const NEEDV={"Lùi thì":"Lùi thì khi kể lại lời người khác","Giữ 
 function repOf(a,s){DB.reports[a.id]=DB.reports[a.id]||{};const r=DB.reports[a.id][s.name]=DB.reports[a.id][s.name]||{status:a.reported?"Đã nhận":"Chưa gửi"};
   const rs=resultOf(a);const row=rs.rows.find(x=>x.s.id===s.id);const e=find(a.examId);const weakI=e.items.map((it,i)=>[it,rs.rates[i]]).sort((x,y)=>x[1]-y[1])[0];
   r.lam_tot=r.lam_tot||GOOD[s.name]||(row&&row.score>=8?"Làm bài cẩn thận, đúng hầu hết các câu":"Nộp bài đúng hạn");r.can_luyen=r.can_luyen||NEEDV[row&&row.need]||sk(weakI[0].skill);r.goi_y=r.goi_y||"Hỏi con \"Hôm nay cô hỏi gì?\" và nghe con kể lại bằng tiếng Anh";
-  r.hold=DB.verify.some(v=>v.cls===a.cls&&v.name===s.name&&!v.status);r.first=s.firstReport;r.drop=s.name==="Minh"||s.name==="Phúc";r.linked=s.zalo!==false;r.should=r.hold||r.first||r.drop||!!r.note;r.row=row;return r}
+  r.hold=DB.verify.some(v=>v.cls===a.cls&&v.name===s.name&&(!v.status||v.status==="lai"));r.first=s.firstReport;r.drop=s.name==="Minh"||s.name==="Phúc";r.linked=s.zalo!==false;r.should=r.hold||r.first||r.drop||!!r.note;r.row=row;return r}
 function zns(a,s,r,noteAll){const e=find(a.examId);const twin=!!a.twinOfAssign;const row=r.row;
   const rows=twin?[["Kiểm tra lớp",row&&row.submitted?`${row.score}/10 câu đúng`:"Vắng"],["So với BTVN",row&&row.cmp==="Khớp"?"Khớp":"Cô sẽ cập nhật sau"],["Làm tốt",r.lam_tot],["Cần luyện",r.can_luyen],["Gợi ý ở nhà",r.goi_y]]:[["Kết quả",row&&row.submitted?`${row.score}/10`:"Chưa nộp"],["Nộp bài",row&&row.submitted?"Đúng hạn":"Chưa nộp"],["Làm tốt",r.lam_tot],["Cần luyện",r.can_luyen],["Gợi ý ở nhà",r.goi_y]];
   return `<div class="phone" data-ui><div class="zmsg"><b>${twin?"Kết quả kiểm tra trên lớp":"Kết quả bài tập"} của ${esc(s.name)}</b><p>Kính gửi phụ huynh em ${esc(s.name)}, lớp ${a.cls}. Cô ${MY_NAME} gửi kết quả bài ${esc(e.title)}:</p><table>${rows.map(x=>`<tr><td>${x[0]}</td><td>${esc(x[1])}</td></tr>`).join("")}</table><span class="zbtn">Xem chi tiết</span></div>${noteAll||r.note?`<div class="zmsg"><span class="sub">Tin tư vấn OA, nếu phụ huynh tương tác trong 48 giờ qua</span><p>${esc([noteAll,r.note].filter(Boolean).join(" · "))}</p></div>`:""}</div>`}
@@ -436,4 +472,52 @@ function withdrawModal(aid){const a=DB.assigns.find(x=>x.id===aid);if(!a)return;
      else{DB.assigns=DB.assigns.filter(x=>x.id!==a.id&&x.twinOfAssign!==a.id);delete (DB.reports||{})[a.id];if(DB.scan)delete DB.scan[a.id];DB.verify=DB.verify.filter(x=>!(x.cls===a.cls&&x.aid===a.id))}
      Object.keys(RES_CACHE).forEach(k=>delete RES_CACHE[k]);if(typeof RESP_CACHE!=="undefined")Object.keys(RESP_CACHE).forEach(k=>delete RESP_CACHE[k]);
      save();closeM();go({v:"class",cls:a.cls,tab:"assign"});toast(v==="close"?`Đã đóng "${e.title}" ở ${a.cls}; giữ ${n} bài đã nộp.`:`Đã rút "${e.title}" khỏi ${a.cls}.`)}});
+}
+
+/* ---- Chế độ học sinh làm ngay trên máy của cô: toàn màn hình, không có đáp án, không quay lại được ---- */
+function kioskQuiz(name,items,done){
+  const res=items.map(()=>({pick:null,sec:0}));let i=0,t0=Date.now(),sel=null;
+  const root=document.createElement("div");root.id="kiosk";root.className="kiosk";document.body.appendChild(root);
+  const hold=(el,ms,fn)=>{let t=null;const st=()=>{el.classList.add("holding");t=setTimeout(()=>{el.classList.remove("holding");fn()},ms)},en=()=>{clearTimeout(t);el.classList.remove("holding")};
+    el.onmousedown=st;el.ontouchstart=e=>{e.preventDefault();st()};el.onmouseup=el.onmouseleave=el.ontouchend=en};
+  const finish=()=>{root.remove();document.onkeydown=null;done(res)};
+  const draw=()=>{
+    if(i>=items.length){root.innerHTML=`<div class="kbox kdone"><div class="kmark">✓</div><h1>Em đã làm xong</h1><p>Em đưa máy lại cho cô nhé.</p><button class="kback" id="kBack"><span>Cô giữ nút này 1 giây để xem kết quả</span></button></div>`;hold(root.querySelector("#kBack"),1000,finish);return}
+    const it=items[i];sel=res[i].pick;
+    root.innerHTML=`<div class="khead"><span class="kbrand" id="kEsc" title="Cô giữ 2 giây để thoát">TOMO</span><span>Bài kiểm tra ngắn · ${esc(name)}</span><span class="kprog">Câu ${i+1}/${items.length}</span></div>
+     <div class="kbox"><div class="kbar"><i style="width:${100*i/items.length}%"></i></div><h1 class="kstem">${esc(it.stem)}</h1>
+      <div class="kopts">${it.options.map((o,j)=>`<button class="kopt ${sel===j?"on":""}" data-k="${j}"><b>${ABCD[j]}</b>${esc(o)}</button>`).join("")}</div>
+      <button class="knext" id="kNext" ${sel==null?"disabled":""}>${i<items.length-1?"Câu tiếp":"Nộp bài"}</button><p class="khint">Không quay lại câu trước được. Em đọc kỹ rồi chọn.</p></div>`;
+    root.querySelectorAll("[data-k]").forEach(b=>b.onclick=()=>{sel=+b.dataset.k;res[i].pick=sel;root.querySelectorAll("[data-k]").forEach(x=>x.classList.toggle("on",+x.dataset.k===sel));root.querySelector("#kNext").disabled=false});
+    root.querySelector("#kNext").onclick=()=>{res[i].sec=Math.max(1,Math.round((Date.now()-t0)/1000));i++;t0=Date.now();draw()};
+    hold(root.querySelector("#kEsc"),2000,()=>{res.forEach((r,k)=>{if(k>=i)r.pick=r.pick??null});finish()});
+  };
+  document.onkeydown=e=>{if(e.key==="Escape")e.preventDefault();if(i<items.length&&/^[a-dA-D1-4]$/.test(e.key)){const j="abcd1234".indexOf(e.key.toLowerCase())%4;const b=root.querySelector(`[data-k="${j}"]`);if(b)b.click()}if(e.key==="Enter"){const n=root.querySelector("#kNext");if(n&&!n.disabled)n.click()}};
+  draw();
+}
+
+/* Popup xác nhận nhanh: mở từ nhãn "Cần cô xác nhận" / "Nên kiểm tra thêm" ở bảng kết quả mini test.
+   Cùng các việc như tab Cần xác nhận: Hỏi em ngay · Kiểm tra sau · Ghi nhận Tự làm / Chưa tự làm · Xem hồ sơ. */
+function verifyPopup(c,n,a){
+  const s=ROSTER[c].find(x=>x.name===n);if(!s)return;
+  const hw=a&&a.twinOfAssign?DB.assigns.find(x=>x.id===a.twinOfAssign):assignsOf(c).find(x=>x.state==="done"&&!x.twinOfAssign);
+  const getV=()=>DB.verify.find(v=>v.cls===c&&v.name===n&&!v.status);
+  const ensureV=()=>{let v=getV();if(!v&&hw){markVerify(hw,[s.id]);v=getV();if(v){v.why=v.why||"Mini test thấp hơn bài về nhà";const R=a?respOf(a).rows.find(r=>r.s.id===s.id):null;if(R&&R.submitted)v.clsScore=R.score;save()}}return v};
+  const v0=getV(),done=DB.verify.find(v=>v.cls===c&&v.name===n&&v.status);
+  const R=a?respOf(a).rows.find(r=>r.s.id===s.id):null;const X=a?(resultOf(a).rows.find(r=>r.s.id===s.id)||{}):{};
+  const obs=typeof evidenceOf==="function"?evObs(evidenceOf(c,s).rows):null;
+  const home=v0&&v0.home!=null?v0.home:X.home,mini=R&&R.submitted?R.score:v0?v0.clsScore:null,exp=X.exp!=null?X.exp:v0?v0.exp:null;
+  const vn=x=>x==null?"—":String(x).replace(".",",");
+  modal(mhead(`Xác nhận bài về nhà: ${esc(s.full||n)}`,`${esc(c)} · ${hw?esc(find(hw.examId).title):""}`)+`
+    <div class="kpis"><div><span class="k">Bài về nhà</span><span class="v num">${vn(home)}<span class="unit">/10</span></span></div><div><span class="k">Mini test trên lớp</span><span class="v num ${mini!=null&&home!=null&&home-mini>=2?"neg-t":""}">${vn(mini)}<span class="unit">/10</span></span></div><div><span class="k">Dự kiến theo năng lực</span><span class="v num">${vn(exp)}</span></div></div>
+    ${obs?`<div class="evobs"><div class="evobs-h"><b>Hệ thống ghi nhận</b><span class="muted small">sự việc, chưa phải kết luận</span></div><ul class="dash">${(v0&&v0.why?[v0.why]:[]).concat(obs.O).map(o=>`<li>${esc(o)}</li>`).join("")}</ul>${obs.W.length?`<div class="evobs-h"><b>Có thể do</b></div><ul class="dash">${obs.W.map(o=>`<li>${esc(o)}</li>`).join("")}</ul>`:""}</div>`:""}
+    ${done?`<div class="notice info">Cô đã ghi nhận: ${done.status==="tu"?"Tự làm":done.status==="khong"?"Chưa tự làm":"Kiểm tra lại"}.</div>`:""}
+    <div class="mfoot"><a href="#" id="vpProf">Xem hồ sơ em</a><span class="sp"></span><button class="btn" id="vpTu">Ghi nhận: Tự làm</button><button class="btn" id="vpKhong">Ghi nhận: Chưa tự làm</button><button class="btn" id="vpLai">Kiểm tra sau</button><button class="btn pri" id="vpOral">Hỏi em ngay</button></div>`,()=>{
+    const set=(st)=>{const v=ensureV();if(!v){toast("Chưa có bài về nhà đã chấm.");return}v.status=st;if(st==="khong")DB.repeatKhong[n]=(DB.repeatKhong[n]||0)+1;DB.evConc=DB.evConc||{};DB.evConc[c+"|"+n]={k:st,at:(d=>String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0"))(new Date())};save();closeM();render();
+      toast(st==="tu"?`Đã ghi nhận. Kết quả bài về nhà của ${n} được giữ.`:`Đã ghi nhận. Hệ thống dùng kết quả trên lớp để chọn bài vừa sức cho ${n}.`,()=>{v.status=null;if(st==="khong")DB.repeatKhong[n]--;delete DB.evConc[c+"|"+n];save();render()})};
+    document.querySelector("#vpTu").onclick=()=>set("tu");document.querySelector("#vpKhong").onclick=()=>set("khong");
+    document.querySelector("#vpLai").onclick=()=>{const v=ensureV();if(v)recheckModal(c,n,v)};
+    document.querySelector("#vpOral").onclick=()=>{const v=ensureV();if(v)oralModal(c,n,v)};
+    document.querySelector("#vpProf").onclick=e=>{e.preventDefault();studentSheet(c,n)};
+  },"wide");
 }
