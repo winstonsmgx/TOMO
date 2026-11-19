@@ -1,0 +1,95 @@
+/* Lời giải ngắn cho từng câu mẫu: vì sao đáp án đúng, vì sao phương án dễ nhầm sai.
+   Câu AI sinh mới có lời giải trong trường explain do AI viết. Đề giữa kì 1 lấy từ lời giải chi tiết cô gửi, rút gọn và sửa các chỗ sai. */
+const EXPL = {
+"A creature from another planet":"alien = sinh vật ngoài hành tinh. astronaut là phi hành gia (người Trái Đất), planet và galaxy không chỉ sinh vật.",
+"Mars is often called the Red":"Sao Hoả được gọi là \"Red Planet\" vì bề mặt màu đỏ. Sao Hoả là hành tinh, không phải ngôi sao hay mặt trăng.",
+"Choose the word with a different stress pattern.|planet":"survive nhấn âm 2 (sur-VIVE); planet, alien, surface nhấn âm 1.",
+"\"I am tired,\" she said.":"Tường thuật lùi thì: am → was. \"is\" giữ nguyên thì hiện tại nên sai.",
+"\"We will visit Mars,\" they said.":"Tường thuật lùi thì: will → would. Nhiều em giữ nguyên \"will\".",
+"\"Do you like science?\" he asked me.":"Câu hỏi Yes/No khi tường thuật dùng if/whether. \"that\" chỉ dùng cho câu kể.",
+"\"Where do you live?\" Hoa asked me.":"Câu hỏi tường thuật dùng trật tự câu kể (where + I + lived) và lùi thì. \"where did I live\" giữ trật tự câu hỏi nên sai.",
+"\"What are you doing?\" Mai asked Nam.":"Lùi thì hiện tại tiếp diễn: are doing → was doing; chủ ngữ \"he\" đi với \"was\".",
+"(Đoạn 60 từ về nước trên sao Hỏa) Which detail":"Đoạn văn nói có băng dưới bề mặt sao Hoả; các phương án còn lại trái với thông tin trong bài.",
+"(Cùng đoạn) What can be inferred":"Bài nói nước có thể giúp con người khi đến sao Hoả. \"All scientists agree…\" là khẳng định tuyệt đối, bài không nói.",
+"He said, \"I am using a new app.\"":"Lùi thì hiện tại tiếp diễn: am using → was using.",
+"He said, \"I can fix the robot.\"":"Tường thuật lùi động từ khuyết thiếu: can → could.",
+"Recycling is an ___ way":"Trước danh từ \"way\" cần tính từ: effective.",
+"Scientists ___ a new kind of robot last year.":"\"last year\" là dấu hiệu quá khứ đơn: invented. \"have invented\" không đi với mốc thời gian quá khứ.",
+"Choose the word with a different stress pattern.|robot":"machine nhấn âm 2 (ma-CHINE); robot, science, program nhấn âm 1.",
+"She told me that she ___ the experiment":"Hành động xảy ra trước thời điểm kể (\"the day before\") nên dùng quá khứ hoàn thành: had finished.",
+"There is no ___ on the Moon":"Không có oxygen nên phi hành gia cần bình dưỡng khí để thở. gravity (trọng lực) thì Mặt Trăng vẫn có.",
+"Robots can do many jobs ___ than people.":"Có \"than\" nên dùng so sánh hơn; fast là tính từ ngắn: faster.",
+"\"Do you live near here?\" the man asked me.":"Câu hỏi Yes/No: if + trật tự câu kể + lùi thì (live → lived).",
+"\"Why are you late?\" the teacher asked Nam.":"Lùi thì: are → was; chủ ngữ \"he\" đi với \"was\".",
+"\"Can you see Mars tonight?\" Lan asked.":"Câu hỏi Yes/No: if + chủ ngữ + could (can lùi thì), trật tự câu kể.",
+"Many people think aliens may ___":"Sau động từ khuyết thiếu \"may\" dùng động từ nguyên mẫu: exist.",
+"I ___ to Ha Long Bay twice.":"\"twice\" chỉ số lần đến hiện tại → hiện tại hoàn thành: have been.",
+"She has lived here ___ 2019.":"Mốc thời gian dùng since; khoảng thời gian mới dùng for.",
+"It was the most ___ trip":"Sau \"the most\" và trước danh từ \"trip\" cần tính từ: memorable.",
+"We ___ a lot of photos":"Kết hợp cố định: take photos.",
+"Have you ever ___ a camel?":"Hiện tại hoàn thành dùng quá khứ phân từ: ridden.",
+"\"Have you ever been abroad?\"":"Câu hỏi với \"Have you…\" trả lời bằng \"Yes, I have.\" rồi nêu chi tiết.",
+"\"Do you play chess?\" she asked him.":"Câu hỏi Yes/No dùng if + trật tự câu kể + lùi thì: if he played.",
+"\"Where does your uncle work?\" Mai asked.":"Trật tự câu kể và lùi thì: works → worked; không dùng trợ động từ does/did.",
+"\"What is Lan reading?\" he asked.":"Lùi thì: is reading → was reading.",
+"\"I am hungry,\" Tom said.":"Lùi thì: am → was.",
+"\"We will win,\" the team said.":"Lùi thì: will → would.",
+"(Đoạn 60 từ về Sao Kim)":"Bài nói Sao Kim quá nóng; các phương án khác khẳng định điều bài không nói.",
+/* Đề giữa kì 1 — đề số 4 */
+"MID1":"eight đọc /eɪ/; penalty, celebrate, leisure đọc /e/.",
+"MID2":"gh trong although là âm câm; paragraph, laugh, enough đọc /f/.",
+"MID3":"museum nhấn âm 2; blackberry, heritage, decorate nhấn âm 1.",
+"MID4":"populated nhấn âm 1; minorities, activity, experience nhấn âm 2 (đuôi -ity, -ience nhấn âm ngay trước).",
+"MID5":"Hỏi lựa chọn trong một nhóm (vùng nào của đất nước) dùng Which: What → Which.",
+"MID6":"Múa sạp là một trong các điệu múa đặc trưng: the typical → a typical.",
+"MID7":"Trước cụm danh từ cần tính từ: north → northern.",
+"MID8":"items = các hiện vật trưng bày. goods, products là hàng hoá, sản phẩm; shows là buổi diễn.",
+"MID9":"collect water = lấy nước. gather dùng cho người tụ họp hoặc hái lượm.",
+"MID10":"depend on + trạng từ heavily. affect không đi với on; heavy là tính từ.",
+"MID11":"Hỏi tháng cụ thể trong các tháng: Which month.",
+"MID12":"Trước danh từ house cần tính từ: communal house = nhà rông.",
+"MID13":"Trước danh từ customs cần tính từ: traditional (truyền thống).",
+"MID14":"Đề có hai đáp án: yearly và annually đều là trạng từ và đều hợp nghĩa. Nên sửa phương án A.",
+"MID15":"herd = chăn (gia súc). Các động từ còn lại không đi với \"the goats up the mountainside\".",
+"MID16":"mind + V-ing: picking up.",
+"MID17":"Có \"than\" và tính từ dài peaceful: more peaceful; much nhấn mạnh so sánh.",
+"MID18":"Dùng the trước tên dân tộc để chỉ cả cộng đồng: the Thai people.",
+"MID19":"Phản hồi một thông tin mới lạ: How interesting!",
+"MID20":"Đáp án A chỉ đúng nếu Hoa thấy sở thích này lạ; D cũng là phản hồi tự nhiên. Nên sửa câu dẫn để chỉ còn một đáp án.",
+"MID21":"experienced (giàu kinh nghiệm) gần nghĩa nhất với good (giỏi).",
+"MID22":"famous = well-known (nổi tiếng).",
+"MID23":"traditional (truyền thống) trái nghĩa với modern (hiện đại).",
+"MID24":"important (quan trọng) trái nghĩa với insignificant (không đáng kể).",
+"MID25":"share ethnic roots = có chung nguồn gốc dân tộc.",
+"MID26":"grow wet rice = trồng lúa nước.",
+"MID27":"Chủ ngữ số ít đi với \"is\": costume.",
+"MID28":"Tính từ ghép số + danh từ dùng gạch nối và danh từ số ít: two-string.",
+"MID29":"Câu đầu bài: \"The thing I liked most … was the change of seasons.\"",
+"MID30":"\"them\" thay cho spring, summer, autumn and winter: bốn mùa.",
+"MID31":"\"Everything was fresh\": người viết không ăn đồ hộp vì đồ hộp không tươi.",
+"MID32":"Bài nói người thành phố ăn rau quanh năm, không nói họ trồng rau: D sai. Lưu ý B cũng không được bài xác nhận.",
+"MID33":"not as … as = less … than.",
+"MID34":"started … ago → has taught … for (hiện tại hoàn thành với khoảng thời gian).",
+"MID35":"unless = if … not.",
+"MID36":"Câu cảm thán với danh từ số ít: What + a + tính từ + danh từ (+ S + V)! Đáp án mẫu gốc sai ngữ pháp.",
+"MID37":"In spite of + danh từ / V-ing: being poor hoặc their poverty. Câu gốc thiếu giới từ \"in\" trước \"a happy and healthy way\".",
+"MID38":"find + tân ngữ + tính từ so sánh: find romantic films more interesting than war films.",
+"MID39":"How long is it since … → When did … (hỏi thời điểm trong quá khứ).",
+"MID40":"It's + tính từ + to V: It's more convenient to live in a big city than (to live) in a village."
+};
+function explainOf(it){
+  if(it.explain)return it.explain;
+  if(it.n&&EXPL["MID"+it.n]&&it.source==="Tải lên"&&!it.by)return EXPL["MID"+it.n];
+  const st=it.stem||"";
+  for(const k in EXPL){const [p,opt]=k.split("|");if(k.startsWith("MID"))continue;if(st.startsWith(p)&&(!opt||(it.options||[]).includes(opt)))return EXPL[k]}
+  return "";
+}
+
+/* Phần gạch chân khôi phục theo đáp án và lời giải của đề (agent đề xuất, cô duyệt) */
+const RESTORE={
+ 1:{options:["p<u>e</u>nalty","c<u>e</u>lebrate","l<u>ei</u>sure","<u>ei</u>ght"],why:"Lời giải nói phần gạch chân là \"e\" và \"ei\": eight đọc /eɪ/, các từ còn lại đọc /e/."},
+ 2:{options:["paragra<u>ph</u>","althou<u>gh</u>","lau<u>gh</u>","enou<u>gh</u>"],why:"Lời giải nói phần gạch chân là \"ph\" và \"gh\": gh trong although câm, các từ còn lại đọc /f/."},
+ 5:{stem:"<u>What</u> <sup>A</sup> <u>part of our country</u> <sup>B</sup> <u>would you most like</u> <sup>C</sup> <u>to live in</u> <sup>D</sup>?",why:"Bốn phần gạch chân lấy từ bốn phương án A–D của câu."},
+ 6:{stem:"Mua sap is <u>the typical</u> <sup>A</sup> <u>dance</u> <sup>B</sup> <u>of the Muong people</u> <sup>C</sup> <u>in the North West</u> <sup>D</sup>.",why:"Bốn phần gạch chân lấy từ bốn phương án A–D của câu."},
+ 7:{stem:"Five-coloured sticky rice is a <u>traditional</u> <sup>A</sup> <u>dish</u> <sup>B</sup> in the <u>north</u> <sup>C</sup> <u>mountainous regions</u> <sup>D</sup>.",why:"Bốn phần gạch chân lấy từ bốn phương án A–D của câu."}
+};

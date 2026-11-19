@@ -1,0 +1,21 @@
+{
+  "name": "examen-tomo-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Prototype TOMO (Examen) cho giáo viên: dữ liệu mẫu dùng chung qua Postgres, gọi Claude API qua server.",
+  "scripts": {
+    "dev": "node dev-server.mjs",
+    "db:init": "node scripts/db-init.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.10.0",
+    "@neondatabase/serverless": "^1.2.1"
+  },
+  "devDependencies": {
+    "pg": "^8.23.1"
+  }
+}

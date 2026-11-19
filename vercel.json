@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "outputDirectory": "public",
+  "functions": {
+    "api/ai.js": { "maxDuration": 60 },
+    "api/minitest.js": { "maxDuration": 60 }
+  },
+  "headers": [
+    { "source": "/(.*)\\.(js|css)", "headers": [{ "key": "cache-control", "value": "public, max-age=0, must-revalidate" }] }
+  ]
+}
